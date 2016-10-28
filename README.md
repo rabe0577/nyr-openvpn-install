@@ -9,3 +9,7 @@ Run the script and follow the assistant:
 `wget https://git.io/vpn -O openvpn-install.sh && bash openvpn-install.sh`
 
 Once it ends, you can run it again to add more users, remove some of them or even completely uninstall OpenVPN.
+
+###Modification
+
+This script working over the tcp protocoll and allows you to create a VPN connection over port 443 and protocoll tcp, it behaves like a https request. Also the script allows the client-to-client connection, so the devices in the private network can communicate with other devices of the private network.
