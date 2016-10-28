@@ -133,13 +133,13 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 				PORT=$(grep '^port ' /etc/openvpn/server.conf | cut -d " " -f 2)
 				if pgrep firewalld; then
 					# Using both permanent and not permanent rules to avoid a firewalld reload.
-					firewall-cmd --zone=public --remove-port=$PORT/udp
+					firewall-cmd --zone=public --remove-port=$PORT/tcp
 					firewall-cmd --zone=trusted --remove-source=10.8.0.0/24
-					firewall-cmd --permanent --zone=public --remove-port=$PORT/udp
+					firewall-cmd --permanent --zone=public --remove-port=$PORT/tcp
 					firewall-cmd --permanent --zone=trusted --remove-source=10.8.0.0/24
 				fi
 				if iptables -L -n | grep -qE 'REJECT|DROP'; then
-					sed -i "/iptables -I INPUT -p udp --dport $PORT -j ACCEPT/d" $RCLOCAL
+					sed -i "/iptables -I INPUT -p tcp --dport $PORT -j ACCEPT/d" $RCLOCAL
 					sed -i "/iptables -I FORWARD -s 10.8.0.0\/24 -j ACCEPT/d" $RCLOCAL
 					sed -i "/iptables -I FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT/d" $RCLOCAL
 				fi
@@ -147,7 +147,7 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 				if hash sestatus 2>/dev/null; then
 					if sestatus | grep "Current mode" | grep -qs "enforcing"; then
 						if [[ "$PORT" != '1194' ]]; then
-							semanage port -d -t openvpn_port_t -p udp $PORT
+							semanage port -d -t openvpn_port_t -p tcp $PORT
 						fi
 					fi
 				fi
@@ -234,7 +234,7 @@ else
 	openvpn --genkey --secret /etc/openvpn/ta.key
 	# Generate server.conf
 	echo "port $PORT
-proto udp
+proto tcp
 dev tun
 sndbuf 0
 rcvbuf 0
@@ -299,19 +299,19 @@ crl-verify crl.pem" >> /etc/openvpn/server.conf
 		# We don't use --add-service=openvpn because that would only work with
 		# the default port. Using both permanent and not permanent rules to
 		# avoid a firewalld reload.
-		firewall-cmd --zone=public --add-port=$PORT/udp
+		firewall-cmd --zone=public --add-port=$PORT/tcp
 		firewall-cmd --zone=trusted --add-source=10.8.0.0/24
-		firewall-cmd --permanent --zone=public --add-port=$PORT/udp
+		firewall-cmd --permanent --zone=public --add-port=$PORT/tcp
 		firewall-cmd --permanent --zone=trusted --add-source=10.8.0.0/24
 	fi
 	if iptables -L -n | grep -qE 'REJECT|DROP'; then
 		# If iptables has at least one REJECT rule, we asume this is needed.
 		# Not the best approach but I can't think of other and this shouldn't
 		# cause problems.
-		iptables -I INPUT -p udp --dport $PORT -j ACCEPT
+		iptables -I INPUT -p tcp --dport $PORT -j ACCEPT
 		iptables -I FORWARD -s 10.8.0.0/24 -j ACCEPT
 		iptables -I FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
-		sed -i "1 a\iptables -I INPUT -p udp --dport $PORT -j ACCEPT" $RCLOCAL
+		sed -i "1 a\iptables -I INPUT -p tcp --dport $PORT -j ACCEPT" $RCLOCAL
 		sed -i "1 a\iptables -I FORWARD -s 10.8.0.0/24 -j ACCEPT" $RCLOCAL
 		sed -i "1 a\iptables -I FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT" $RCLOCAL
 	fi
@@ -323,7 +323,7 @@ crl-verify crl.pem" >> /etc/openvpn/server.conf
 				if ! hash semanage 2>/dev/null; then
 					yum install policycoreutils-python -y
 				fi
-				semanage port -a -t openvpn_port_t -p udp $PORT
+				semanage port -a -t openvpn_port_t -p tcp $PORT
 			fi
 		fi
 	fi
@@ -360,7 +360,7 @@ crl-verify crl.pem" >> /etc/openvpn/server.conf
 	# client-common.txt is created so we have a template to add further users later
 	echo "client
 dev tun
-proto udp
+proto tcp
 sndbuf 0
 rcvbuf 0
 remote $IP $PORT
