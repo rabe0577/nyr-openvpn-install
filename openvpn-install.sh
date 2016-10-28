@@ -283,6 +283,7 @@ group $GROUPNAME
 persist-key
 persist-tun
 status openvpn-status.log
+client-to-client
 verb 3
 crl-verify crl.pem" >> /etc/openvpn/server.conf
 	# Enable net.ipv4.ip_forward for the system
